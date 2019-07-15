@@ -1,0 +1,10 @@
+# Go Binaries
+bin/
+
+# VSCode Stuff
+.VSCode/
+.vscode/
+.DS_Store
+
+# IntelliJ stuff
+.idea/
