@@ -15,11 +15,12 @@ Available Commands:
   stop        stop the envrionmentalist daemon
 
 Flags:
-  -h, --help                help for environmentalist
-  -n, --node                the node flag tells environmentalist that we want to watch files associated with NodeJS
-  -p, --php                 the php flag tells environmentalist that we want to watch files associated with PHP
-  -v, --vault-type string   the vault flag tells environmentalist what vault we want to extract secrects from (default "hashicorp-vault")
-      --version             version for environmentalist
+  -h, --help                     help for environmentalist
+  -n, --node                     the node flag tells environmentalist that we want to watch files associated with NodeJS
+  -p, --php                      the php flag tells environmentalist that we want to watch files associated with PHP
+      --vault-auth-type string   the vault-auth-type flag tells envrionmentalist what authentication type to use to log into vault (default "approle")
+  -v, --vault-type string        the vault-type flag tells environmentalist what vault we want to extract secrects from (default "hashicorp-vault")
+      --version                  version for environmentalist
 
 Use "environmentalist [command] --help" for more information about a command.
 ```
