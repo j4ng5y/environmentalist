@@ -1,18 +1,22 @@
 package cmd
 
 import (
+	"bufio"
+	"fmt"
 	"log"
 	"os"
 
+	"github.com/j4ng5y/environmentalist/environmentalist"
 	"github.com/spf13/cobra"
 )
 
 var (
 	version = "0.1.0"
 
-	watchPhp  bool
-	watchNode bool
-	vaultType string
+	watchPhp      bool
+	watchNode     bool
+	vaultType     string
+	vaultAuthType string
 
 	environmentalistCmd = &cobra.Command{
 		Use:     "environmentalist",
@@ -42,7 +46,8 @@ func init() {
 	environmentalistCmd.AddCommand(stopCmd)
 	environmentalistCmd.PersistentFlags().BoolVarP(&watchPhp, "php", "p", false, "the php flag tells environmentalist that we want to watch files associated with PHP")
 	environmentalistCmd.PersistentFlags().BoolVarP(&watchNode, "node", "n", false, "the node flag tells environmentalist that we want to watch files associated with NodeJS")
-	environmentalistCmd.PersistentFlags().StringVarP(&vaultType, "vault-type", "v", "hashicorp-vault", "the vault flag tells environmentalist what vault we want to extract secrects from")
+	environmentalistCmd.PersistentFlags().StringVarP(&vaultType, "vault-type", "v", "hashicorp-vault", "the vault-type flag tells environmentalist what vault we want to extract secrects from")
+	environmentalistCmd.PersistentFlags().StringVarP(&vaultAuthType, "vault-auth-type", "", "approle", "the vault-auth-type flag tells envrionmentalist what authentication type to use to log into vault")
 }
 
 // Execute runs the CLI
@@ -56,6 +61,29 @@ func Execute() {
 
 func runDaemon(ccmd *cobra.Command, args []string) {
 	// Logic for running the Daemon
+	if vaultType == "hashicorp-vault" {
+		if vaultAuthType == "approle" {
+			r := bufio.NewReader(os.Stdin)
+			fmt.Print("Enter your Hashicorp Vault Role ID: ")
+			rID, err := r.ReadString('\n')
+			if err != nil {
+				log.Fatal(err)
+				os.Exit(1)
+			}
+
+			s := bufio.NewReader(os.Stdin)
+			fmt.Print("Enter your Hashicorp Vault Secret ID: ")
+			sID, err := s.ReadString('\n')
+			if err != nil {
+				log.Fatal(err)
+				os.Exit(1)
+			}
+
+			H := environmentalist.NewHCV()
+			H = H.GetToken(H.AppRoleAuth(rID, sID))
+			// TODO: Do more things to actually start the daemon
+		}
+	}
 }
 
 func stopDaemon(ccmd *cobra.Command, args []string) {
