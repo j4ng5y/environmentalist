@@ -31,6 +31,10 @@ var (
 	awsSSMAccessKeyID     string
 	awsSSMSecretAccessKey string
 
+	runAddress  string
+	runHTTPPort int
+	runGRPCPort int
+
 	forceStop bool
 
 	environmentalistCmd = &cobra.Command{
@@ -77,7 +81,6 @@ Please see https://github.com/j4ng5y/envrionmentalist for a full API breakdown.`
 )
 
 func init() {
-	server = srv.NewServer()
 	environmentalistCmd.AddCommand(runCmd)
 	environmentalistCmd.AddCommand(stopCmd)
 	environmentalistCmd.PersistentFlags().BoolVarP(&hashiVault, "hashicorp-vault", "v", false, "the hashicorp-vault flag tells environmentalist that we want to use the hashicorp vault")
@@ -107,6 +110,15 @@ func init() {
 	default:
 		log.Print("Invalid aws-ssm-credential-type. Must be one of type: \"profile\", \"manual\", or \"role\"")
 	}
+
+	runCmd.PersistentFlags().StringVarP(&runAddress, "bind-address", "b", "0.0.0.0", "the IPv4 address on the server to bind to")
+	runCmd.PersistentFlags().IntVarP(&runHTTPPort, "http-port", "p", 5005, "the tcp port to bind the HTTP server to")
+	runCmd.PersistentFlags().IntVarP(&runGRPCPort, "grpc-port", "g", 50051, "the tcp port to bind the gRPC server to")
+	runCmd.MarkFlagRequired("bind-address")
+	runCmd.MarkFlagRequired("http-port")
+	runCmd.MarkFlagRequired("grpc-port")
+
+	server = srv.NewServer().SetHTTPAddress(fmt.Sprintf("%s:%d", runAddress, runHTTPPort))
 
 	stopCmd.PersistentFlags().BoolVarP(&forceStop, "force", "", false, "force the daemon to stop")
 }
@@ -154,10 +166,10 @@ func runDaemon(ccmd *cobra.Command, args []string) {
 		}
 	}()
 
-	log.Printf("Starting the gRPC Server on '%s'...\n", "0.0.0.0:50051")
+	log.Printf("Starting the gRPC Server on '%s:%d'...\n", runAddress, runGRPCPort)
 	go func() {
 		s := envrionmentalistgrpc.NewServer()
-		lis, err := net.Listen("tcp", "0.0.0.0:50051")
+		lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", runAddress, runGRPCPort))
 		if err != nil {
 			log.Fatal(err)
 			os.Exit(1)

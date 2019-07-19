@@ -30,6 +30,17 @@ func NewServer() *Server {
 	return &S
 }
 
+func (S *Server) SetHTTPAddress(addr string) *Server {
+	S.HTTPServer = &http.Server{
+		Addr:         addr,
+		Handler:      S.NewRouter(),
+		IdleTimeout:  time.Duration(60) * time.Second,
+		WriteTimeout: time.Duration(15) * time.Second,
+		ReadTimeout:  time.Duration(15) * time.Second,
+	}
+	return S
+}
+
 func (*Server) NewRouter() *mux.Router {
 	R := mux.NewRouter()
 
