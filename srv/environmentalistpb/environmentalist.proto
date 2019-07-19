@@ -2,88 +2,45 @@ syntax = "proto3";
 package environmentalist;
 option go_package="environmentalistpb";
 
-message HashicorpVault_NewSecretRequest {
+message NewSecretRequest {
     string secretName = 1;
     string secretValut = 2;
 }
 
-message HashicorpVault_NewSecretResponse {
+message NewSecretResponse {
     bool success = 1;
 }
 
-message HashicorpVault_ViewSecretRequest {
+message ViewSecretRequest {
     string secretName = 1;
 }
 
-message HashicorpVault_ViewSecretResponse {
+message ViewSecretResponse {
     string secretValue = 1;
 }
 
-message HashicorpVault_UpdateSecretRequest {
+message UpdateSecretRequest {
     string secretName = 1;
     string secretNewValue = 2;
 }
 
-message HashicorpVault_UpdateSecretResponse {
+message UpdateSecretResponse {
     bool success = 1;
     string secretOldValue = 2;
     string secretNewValue = 3;
 }
 
-message HashicorpVault_DeleteSecretRequest {
+message DeleteSecretRequest {
     string secretName = 1;
 }
 
-message HashicorpVault_DeleteSecretResponse {
+message DeleteSecretResponse {
     bool success = 1;
 }
 
-message AWSSSM_NewSecretRequest {
-    string secretName = 1;
-    string secretValut = 2;
-}
-
-message AWSSSM_NewSecretResponse {
-    bool success = 1;
-}
-
-message AWSSSM_ViewSecretRequest {
-    string secretName = 1;
-}
-
-message AWSSSM_ViewSecretResponse {
-    string secretValue = 1;
-}
-
-message AWSSSM_UpdateSecretRequest {
-    string secretName = 1;
-    string secretNewValue = 2;
-}
-
-message AWSSSM_UpdateSecretResponse {
-    bool success = 1;
-    string secretOldValue = 2;
-    string secretNewValue = 3;
-}
-
-message AWSSSM_DeleteSecretRequest {
-    string secretName = 1;
-}
-
-message AWSSSM_DeleteSecretResponse {
-    bool success = 1;
-}
-
-service HashicorpVaultService {
-    rpc ViewHashicorpVaultSecret (HashicorpVault_ViewSecretRequest) returns (HashicorpVault_ViewSecretResponse) {};
-    rpc NewHashicorpVaultSecret (HashicorpVault_NewSecretRequest) returns (HashicorpVault_NewSecretResponse) {};
-    rpc UpdateHashicorpVaultSecret (HashicorpVault_UpdateSecretRequest) returns (HashicorpVault_UpdateSecretResponse) {};
-    rpc DeleteHashicorpVaultSecret (HashicorpVault_DeleteSecretRequest) returns (HashicorpVault_DeleteSecretResponse) {};
-}
-
-service AWSSSMService {
-    rpc ViewAWSSSMSecret (AWSSSM_ViewSecretRequest) returns (AWSSSM_ViewSecretResponse) {};
-    rpc NewAWSSSMSecret (AWSSSM_NewSecretRequest) returns (AWSSSM_NewSecretResponse) {};
-    rpc UpdateAWSSSMSecret (AWSSSM_UpdateSecretRequest) returns (AWSSSM_UpdateSecretResponse) {};
-    rpc DeleteAWSSSMSecret (AWSSSM_DeleteSecretRequest) returns (AWSSSM_DeleteSecretResponse) {};
+service SecretService {
+    rpc ViewSecret (ViewSecretRequest) returns (ViewSecretResponse) {};
+    rpc NewSecret (NewSecretRequest) returns (NewSecretResponse) {};
+    rpc UpdateSecret (UpdateSecretRequest) returns (UpdateSecretResponse) {};
+    rpc DeleteSecret (DeleteSecretRequest) returns (DeleteSecretResponse) {};
 }

@@ -171,8 +171,7 @@ func runDaemon(ccmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	environmentalistpb.RegisterAWSSSMServiceServer(server.GRPCServer, s)
-	environmentalistpb.RegisterHashicorpVaultServiceServer(server.GRPCServer, s)
+	environmentalistpb.RegisterSecretServiceServer(server.GRPCServer, s)
 
 	err = server.GRPCServer.Serve(lis)
 	if err != nil {
