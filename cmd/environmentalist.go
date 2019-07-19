@@ -50,16 +50,16 @@ var (
 The Server runs as both a RESTful service as well as a gRPC service so it should be usable for almost any situation.
 
 A RESTful request to access a secret looks something like this:
-  curl -X GET https://environmentalist:5005/hashicorp-vault/get/mySharedSecret
+  curl -X GET https://environmentalist:5005/view/mySharedSecret
 
 A RESTful request to store a new secret looks something like this:
-  curl -X POST -H "Content-Type: application/json" -d '{"mySharedSecret": "thisIsASuperSecretPassword"}' https://environmentalist:5005/hashicorp-vault/new/mySharedSecret
+  curl -X POST -H "Content-Type: application/json" -d '{"mySharedSecret": "thisIsASuperSecretPassword"}' https://environmentalist:5005/add/mySharedSecret
 
 A RESTful request to delete a secret looks something like this:
-  curl -X DELETE https://environmentalist:5005/hashicorp-vault/delete/mySharedSecret
+  curl -X DELETE https://environmentalist:5005/delete/mySharedSecret
 
 A RESTful request to modify a secret looks something like this:
-  curl -X PUT -H "Content-Type: application/json" -d '{"mySharedSecret": "thisIsANewSuperSecretPassword"}' https://environmentalist:5005/hashicorp-vault/update/mySharedSecret
+  curl -X PUT -H "Content-Type: application/json" -d '{"mySharedSecret": "thisIsANewSuperSecretPassword"}' https://environmentalist:5005/update/mySharedSecret
 
 Please see https://github.com/j4ng5y/envrionmentalist for a full API breakdown.`,
 		Run: func(ccmd *cobra.Command, args []string) {},
@@ -114,9 +114,6 @@ func init() {
 	runCmd.PersistentFlags().StringVarP(&runAddress, "bind-address", "b", "0.0.0.0", "the IPv4 address on the server to bind to")
 	runCmd.PersistentFlags().IntVarP(&runHTTPPort, "http-port", "p", 5005, "the tcp port to bind the HTTP server to")
 	runCmd.PersistentFlags().IntVarP(&runGRPCPort, "grpc-port", "g", 50051, "the tcp port to bind the gRPC server to")
-	runCmd.MarkFlagRequired("bind-address")
-	runCmd.MarkFlagRequired("http-port")
-	runCmd.MarkFlagRequired("grpc-port")
 
 	server = srv.NewServer().SetHTTPAddress(fmt.Sprintf("%s:%d", runAddress, runHTTPPort))
 
@@ -167,23 +164,21 @@ func runDaemon(ccmd *cobra.Command, args []string) {
 	}()
 
 	log.Printf("Starting the gRPC Server on '%s:%d'...\n", runAddress, runGRPCPort)
-	go func() {
-		s := envrionmentalistgrpc.NewServer()
-		lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", runAddress, runGRPCPort))
-		if err != nil {
-			log.Fatal(err)
-			os.Exit(1)
-		}
+	s := envrionmentalistgrpc.NewServer()
+	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", runAddress, runGRPCPort))
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
 
-		environmentalistpb.RegisterAWSSSMServiceServer(server.GRPCServer, s)
-		environmentalistpb.RegisterHashicorpVaultServiceServer(server.GRPCServer, s)
+	environmentalistpb.RegisterAWSSSMServiceServer(server.GRPCServer, s)
+	environmentalistpb.RegisterHashicorpVaultServiceServer(server.GRPCServer, s)
 
-		err = server.GRPCServer.Serve(lis)
-		if err != nil {
-			log.Fatal(err)
-			os.Exit(1)
-		}
-	}()
+	err = server.GRPCServer.Serve(lis)
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
 }
 
 func stopDaemon(ccmd *cobra.Command, args []string) {

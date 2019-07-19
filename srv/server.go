@@ -44,14 +44,10 @@ func (S *Server) SetHTTPAddress(addr string) *Server {
 func (*Server) NewRouter() *mux.Router {
 	R := mux.NewRouter()
 
-	R.HandleFunc("/hashicorp-vault/new/{secretName}", environmentalistrestful.NewHashicorpVaultSecret)
-	R.HandleFunc("/hashicorp-vault/update/{secretName}", environmentalistrestful.UpdateHashicorpVaultSecret)
-	R.HandleFunc("/hashicorp-vault/delte/{secretName}", environmentalistrestful.DeleteHashicorpVaultSecret)
-	R.HandleFunc("/hashicorp-vault/view/{secretName}", environmentalistrestful.ViewHashicorpVaultSecret)
-	R.HandleFunc("/aws-ssm/new/{secretName}", environmentalistrestful.NewAWSSSMSecret)
-	R.HandleFunc("/aws-ssm/update/{secretName}", environmentalistrestful.UpdateAWSSSMSecret)
-	R.HandleFunc("/aws-ssm/delte/{secretName}", environmentalistrestful.DeleteAWSSSMSecret)
-	R.HandleFunc("/aws-ssm/view/{secretName}", environmentalistrestful.ViewAWSSSMSecret)
+	R.HandleFunc("/new/{secretName}", environmentalistrestful.NewSecret)
+	R.HandleFunc("/update/{secretName}", environmentalistrestful.UpdateSecret)
+	R.HandleFunc("/delte/{secretName}", environmentalistrestful.DeleteSecret)
+	R.HandleFunc("/view/{secretName}", environmentalistrestful.ViewSecret)
 
 	return R
 }
