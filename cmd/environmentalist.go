@@ -2,15 +2,24 @@ package cmd
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"log"
+	"net"
 	"os"
+	"time"
+
+	envrionmentalistgrpc "github.com/j4ng5y/environmentalist/srv/environmentalistgrpc"
+	"github.com/j4ng5y/environmentalist/srv/environmentalistpb"
+
+	"github.com/j4ng5y/environmentalist/srv"
 
 	"github.com/j4ng5y/environmentalist/environmentalist"
 	"github.com/spf13/cobra"
 )
 
 var (
+	server  *srv.Server
 	version = "0.1.0"
 
 	hashiVault            bool
@@ -21,6 +30,8 @@ var (
 	awsSSMProfileName     string
 	awsSSMAccessKeyID     string
 	awsSSMSecretAccessKey string
+
+	forceStop bool
 
 	environmentalistCmd = &cobra.Command{
 		Use:     "environmentalist",
@@ -66,6 +77,7 @@ Please see https://github.com/j4ng5y/envrionmentalist for a full API breakdown.`
 )
 
 func init() {
+	server = srv.NewServer()
 	environmentalistCmd.AddCommand(runCmd)
 	environmentalistCmd.AddCommand(stopCmd)
 	environmentalistCmd.PersistentFlags().BoolVarP(&hashiVault, "hashicorp-vault", "v", false, "the hashicorp-vault flag tells environmentalist that we want to use the hashicorp vault")
@@ -95,6 +107,8 @@ func init() {
 	default:
 		log.Print("Invalid aws-ssm-credential-type. Must be one of type: \"profile\", \"manual\", or \"role\"")
 	}
+
+	stopCmd.PersistentFlags().BoolVarP(&forceStop, "force", "", false, "force the daemon to stop")
 }
 
 // Execute runs the CLI
@@ -128,11 +142,56 @@ func runDaemon(ccmd *cobra.Command, args []string) {
 
 			H := environmentalist.NewHCV()
 			H = H.GetToken(H.AppRoleAuth(rID, sID))
-			// TODO: Do more things to actually start the daemon
 		}
 	}
+
+	log.Printf("Starting the HTTP Server on '%s'...\n", server.HTTPServer.Addr)
+	go func() {
+		err := server.HTTPServer.ListenAndServe()
+		if err != nil {
+			log.Fatal(err)
+			os.Exit(1)
+		}
+	}()
+
+	log.Printf("Starting the gRPC Server on '%s'...\n", "0.0.0.0:50051")
+	go func() {
+		s := envrionmentalistgrpc.NewServer()
+		lis, err := net.Listen("tcp", "0.0.0.0:50051")
+		if err != nil {
+			log.Fatal(err)
+			os.Exit(1)
+		}
+
+		environmentalistpb.RegisterAWSSSMServiceServer(server.GRPCServer, s)
+		environmentalistpb.RegisterHashicorpVaultServiceServer(server.GRPCServer, s)
+
+		err = server.GRPCServer.Serve(lis)
+		if err != nil {
+			log.Fatal(err)
+			os.Exit(1)
+		}
+	}()
 }
 
 func stopDaemon(ccmd *cobra.Command, args []string) {
-	// Logic for stopping the Daemon
+	if forceStop {
+		err := server.HTTPServer.Shutdown(context.Background())
+		if err != nil {
+			log.Fatal(err)
+			os.Exit(1)
+		}
+		server.GRPCServer.Stop()
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(30)*time.Second)
+	defer cancel()
+
+	err := server.HTTPServer.Shutdown(ctx)
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+
+	server.GRPCServer.GracefulStop()
+	os.Exit(0)
 }
