@@ -203,6 +203,12 @@ func (S *EnvSSM) Delete(parameterName string) error {
 	return nil
 }
 
+// ViewResponse is a struct that contains only relevant information about a parameter coming back from SSM
+type ViewResponse struct {
+	ParameterName  string
+	ParameterValue string
+}
+
 // View returns the response from AWS SSM for a particular parameter
 //
 // Arguments:
@@ -211,12 +217,15 @@ func (S *EnvSSM) Delete(parameterName string) error {
 // Returns:
 //     (*ssm.GetParameterOutput): The aws.ssm.GetParameter output value
 //     (error): an error if one exists
-func (S *EnvSSM) View(parameterName string) (*ssm.GetParameterOutput, error) {
+func (S *EnvSSM) View(parameterName string) (*ViewResponse, error) {
+	var R ViewResponse
 	retVal, err := S.SSMService.GetParameter(&ssm.GetParameterInput{
 		Name: aws.String(parameterName),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch the parameter '%s' due to error, err: %v", parameterName, err)
 	}
-	return retVal, nil
+	R.ParameterName = *retVal.Parameter.Name
+	R.ParameterValue = *retVal.Parameter.Value
+	return &R, nil
 }
